@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"target": "es2020",
+		"moduleResolution": "node",
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"experimentalDecorators": true,
+		"noUnusedLocals": true,
+		"sourceMap": true,
+		"outDir": "esm",
+		"baseUrl": ".",
+		"paths": {
+			"*": [
+				"src/types/*"
+			]
+		},
+		"lib": [
+			"DOM",
+			"ES2021"
+		],
+		"declaration": true,
+		// "skipLibCheck": true,
+		"esModuleInterop": true,
+		"allowJs": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+	},
+	"include": [
+		"src/*"
+	]
+}
