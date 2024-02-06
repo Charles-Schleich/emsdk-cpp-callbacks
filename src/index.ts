@@ -24,9 +24,11 @@ export async function wasmmodule(): Promise<Module> {
                 _register_rm_callback: mod_instance.cwrap("register_rm_callback", "void", ["number"], { async: true }),
                 // To allocate memory
                 // _z_malloc: mod_instance.cwrap("z_malloc", "number", ["number"], { async: true }),
-                //  test call 
+                test_call_no_args: mod_instance.cwrap("test_call_no_args", "number", [], { async: true }),
+                _test_call_no_args: mod_instance.cwrap("_test_call_no_args", "number", [], { async: true }),
                 _test_call: mod_instance.cwrap("_test_call", "number", ["number", "number", "number"], { async: true }),
                 test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
+
             };
             mod_instance.api = api;
 
@@ -46,7 +48,7 @@ export class DEV {
 
     static async runme(): Promise<number> {
 
-        // const WasmModule: Module = await wasmmodule();
+        const WasmModule: Module = await wasmmodule();
 
         // const arr = new Uint8Array([65, 66, 67, 68]);
 
@@ -65,7 +67,10 @@ export class DEV {
 
         console.log("--DEV");
         // console.log("TEST ---- ",WasmModule.api);
-        // console.log("Calling WasmModule.api.test_call ");
+        console.log("Calling WasmModule.api.test_call ");
+        
+        await WasmModule.api.test_call_no_args();
+        // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
         // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
         console.log("--??????");
         

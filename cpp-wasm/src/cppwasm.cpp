@@ -23,6 +23,14 @@ extern "C"
   //   });
   // });
 
+  EMSCRIPTEN_KEEPALIVE
+  void test_call_no_args()
+  {
+    printf("------ test_call_no_args ------\n");
+    return;
+  }
+
+
   // TODO: REMOVE
   EMSCRIPTEN_KEEPALIVE
   void test_call(char *pointer, int length, emscripten::val callback)
