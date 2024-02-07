@@ -28,7 +28,7 @@ set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
 -s TEXTDECODER=0 \
 -s ENVIRONMENT=web,worker \
 -s EXPORTED_RUNTIME_METHODS=[\"writeArrayToMemory\",\"getValue\",\"setValue\",\"registerJSCallback\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8OnStack\"] \
--s EXPORTED_FUNCTIONS=['_test_call','_test_call_no_args'] \
+-s EXPORTED_FUNCTIONS=['_test_call','_fn_no_args','_fn_args','_malloc'] \
 -s PTHREAD_POOL_SIZE=16 \
 -s ALLOW_TABLE_GROWTH \
 -s RESERVED_FUNCTION_POINTERS=100 \

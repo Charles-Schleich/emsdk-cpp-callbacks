@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <cstdlib>
+#include<iostream>
 
 extern "C"
 {
@@ -24,12 +26,32 @@ extern "C"
   // });
 
   EMSCRIPTEN_KEEPALIVE
-  void test_call_no_args()
+  void fn_no_args()
   {
-    printf("------ test_call_no_args ------\n");
+    printf("------ fn_no_args ------\n");
     return;
   }
 
+  EMSCRIPTEN_KEEPALIVE
+  void fn_args(int a, char *pointer, int length)
+  {
+    printf("------ fn_args ------\n");
+    // printf("------ a ------\n");
+    std::cout<<"The Value of 'num' is "<<a;
+    std::cout<<std::endl;
+
+    // Output
+    int length2 = sizeof(length) / sizeof(char);
+
+    int loop;
+    for (loop = 0; loop < length2; loop++)
+    {
+      printf("C loop: %d : %d \n", loop, pointer[loop]);
+    }
+    printf("------ END test_call ------\n");
+
+    return;
+  }
 
   // TODO: REMOVE
   EMSCRIPTEN_KEEPALIVE
@@ -50,7 +72,9 @@ extern "C"
     printf("------ END test_call ------\n");
 
     printf("Call callback().await()\n");
+
     emscripten::val return_val = callback().await();
+
     printf("------ callback().await() ------\n");
 
     return;

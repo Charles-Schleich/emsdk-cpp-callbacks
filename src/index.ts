@@ -9,6 +9,8 @@ interface Module {
     registerJSCallback(callback: any): number,
     writeArrayToMemory(array: Uint8Array, buffer: number): any, // TODO: Returns None ? 
     cwrap(...arg: any): any,
+    // This doesnt look like it works
+    // _malloc(...arg:any) : any,
     api: any
 }
 
@@ -24,10 +26,13 @@ export async function wasmmodule(): Promise<Module> {
                 _register_rm_callback: mod_instance.cwrap("register_rm_callback", "void", ["number"], { async: true }),
                 // To allocate memory
                 // _z_malloc: mod_instance.cwrap("z_malloc", "number", ["number"], { async: true }),
-                test_call_no_args: mod_instance.cwrap("test_call_no_args", "number", [], { async: true }),
-                _test_call_no_args: mod_instance.cwrap("_test_call_no_args", "number", [], { async: true }),
-                _test_call: mod_instance.cwrap("_test_call", "number", ["number", "number", "number"], { async: true }),
+                fn_no_args: mod_instance.cwrap("fn_no_args", "number", [], { async: true }),
+                fn_args: mod_instance.cwrap("fn_args", "number", [], { async: true }),
+                // _fn_no_args: mod_instance.cwrap("_fn_no_args", "number", [], { async: true }),
+                // _test_call: mod_instance.cwrap("_test_call", "number", ["number", "number", "number"], { async: true }),
                 test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
+                // 
+                malloc: mod_instance.cwrap("malloc", "number", ["number"],),
 
             };
             mod_instance.api = api;
@@ -37,7 +42,6 @@ export async function wasmmodule(): Promise<Module> {
     }
     return mod_instance
 }
-
 
 // async function ts_callback(): Promise<number> {
 //     console.log("TS CALLBACK ");
@@ -65,11 +69,22 @@ export class DEV {
         //     }
         // };
 
-        console.log("--DEV");
-        // console.log("TEST ---- ",WasmModule.api);
-        console.log("Calling WasmModule.api.test_call ");
+        // var buf = Module.malloc(10);
+        // 
+        const arr = new Uint8Array([65, 66, 67, 68]); 
+        var dataPtr = WasmModule.api.malloc(arr.length);
+        WasmModule.writeArrayToMemory(arr, dataPtr);
         
-        await WasmModule.api.test_call_no_args();
+        console.log("PTR", dataPtr);
+        //
+        console.log("--DEV");
+        console.log("Calling WasmModule.api.fn_no_args"); 
+        await WasmModule.api.fn_no_args();
+        console.log("Calling WasmModule.api.fn_args"); 
+        await WasmModule.api.fn_args(100, dataPtr, 4);
+        
+        
+        // WasmModule
         // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
         // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
         console.log("--??????");
