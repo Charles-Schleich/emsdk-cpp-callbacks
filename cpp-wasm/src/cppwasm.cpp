@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <cstdlib>
-#include<iostream>
+#include <iostream>
 
 extern "C"
 {
@@ -37,8 +37,8 @@ extern "C"
   {
     printf("------ fn_args ------\n");
     // printf("------ a ------\n");
-    std::cout<<"The Value of 'num' is "<<a;
-    std::cout<<std::endl;
+    std::cout << "The Value of 'num' is " << a;
+    std::cout << std::endl;
 
     // Output
     int length2 = sizeof(length) / sizeof(char);
@@ -49,9 +49,39 @@ extern "C"
       printf("C loop: %d : %d \n", loop, pointer[loop]);
     }
     printf("------ END test_call ------\n");
-
     return;
   }
+
+  EM_JS(void, em_js_function, (), {
+    console.log('    JS - inside C++ EM_JS Function!');
+  });
+
+  EMSCRIPTEN_KEEPALIVE
+  void fn_call_js()
+  {
+    emscripten_run_script("console.log('    JS - inside C++, emscripten_run_script ')");
+
+    em_js_function();
+
+    EM_ASM(
+        console.log('    JS - inside C++ EM_ASM Function!');
+    );
+    return;
+  }
+
+  
+
+  EMSCRIPTEN_KEEPALIVE
+  void invoke_function_pointer(void (*f)(void))
+  {
+    (*f)();
+  }
+
+  // EMSCRIPTEN_KEEPALIVE
+  // void fn_with_callback(int a, )
+  // {
+
+  // }
 
   // TODO: REMOVE
   EMSCRIPTEN_KEEPALIVE

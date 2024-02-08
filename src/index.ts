@@ -8,7 +8,10 @@ interface Module {
     onRuntimeInitialized(): Promise<any>,
     registerJSCallback(callback: any): number,
     writeArrayToMemory(array: Uint8Array, buffer: number): any, // TODO: Returns None ? 
+    // Horrible horrible horribleness
     cwrap(...arg: any): any,
+    ccall(...arg: any): any,
+    addFunction(...arg: any): any,
     // This doesnt look like it works
     // _malloc(...arg:any) : any,
     api: any
@@ -21,19 +24,20 @@ export async function wasmmodule(): Promise<Module> {
         mod_instance = await Module();
         mod_instance.onRuntimeInitialized = async () => {
             const api = {
-
+                //
                 _test_call_js_callback: mod_instance.cwrap("test_call_js_callback", "number", [], { async: true }),
                 _register_rm_callback: mod_instance.cwrap("register_rm_callback", "void", ["number"], { async: true }),
                 // To allocate memory
-                // _z_malloc: mod_instance.cwrap("z_malloc", "number", ["number"], { async: true }),
+                test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
                 fn_no_args: mod_instance.cwrap("fn_no_args", "number", [], { async: true }),
                 fn_args: mod_instance.cwrap("fn_args", "number", [], { async: true }),
-                // _fn_no_args: mod_instance.cwrap("_fn_no_args", "number", [], { async: true }),
-                // _test_call: mod_instance.cwrap("_test_call", "number", ["number", "number", "number"], { async: true }),
-                test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
+                // 
                 // 
                 malloc: mod_instance.cwrap("malloc", "number", ["number"],),
-
+                // Horrible
+                addFunction: mod_instance.cwrap("addFunction", "number", ["any"],),
+                // invoke_function_pointer: mod_instance.cwrap("invoke_function_pointer", "number", ["number"],)
+                fn_call_js: mod_instance.cwrap("fn_call_js", "number", [], { async: true }),
             };
             mod_instance.api = api;
 
@@ -69,21 +73,54 @@ export class DEV {
         //     }
         // };
 
-        // var buf = Module.malloc(10);
-        // 
+
+        // mod_instance.addFunction(function() {
+        //     console.log('I was called from C world!');
+        // });
+
+        // var pointer = WasmModule.api.addFunction(function() {
+        //     console.log('I was called from C world!');
+        // });
+        // mod_instance.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
+        
+        //////////////////////////////////////
+        // Ready for the explosion
+        // WasmModule.removeFunction(pointer);
+        //////////////////////////////////////
+
+        console.log("TS");
         const arr = new Uint8Array([65, 66, 67, 68]); 
         var dataPtr = WasmModule.api.malloc(arr.length);
         WasmModule.writeArrayToMemory(arr, dataPtr);
         
         console.log("PTR", dataPtr);
-        //
-        console.log("--DEV");
-        console.log("Calling WasmModule.api.fn_no_args"); 
+        console.log("Calling WasmModule.api.fn_no_args");
         await WasmModule.api.fn_no_args();
-        console.log("Calling WasmModule.api.fn_args"); 
+        console.log("Calling WasmModule.api.fn_args");
         await WasmModule.api.fn_args(100, dataPtr, 4);
+        console.log("Calling WasmModule.api.fn_call_js");
+        await WasmModule.api.fn_call_js();
+
         
         
+
+        // var pointer = WasmModule.addFunction(function() { 
+        //     console.log('I was called from C world!'); 
+        //   });
+
+        // WasmModule.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
+        // WasmModule.removeFunction(pointer);
+        
+        // Module.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
+        
+        // 
+        // var pointer = Runtime.addFunction(function() { 
+        //      console.log('I was called from C world!'); 
+        // });
+        // Module.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
+        // Runtime.removeFunction(pointer);
+
+          
         // WasmModule
         // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
         // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
