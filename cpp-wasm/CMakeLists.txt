@@ -30,7 +30,7 @@ set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
 -s EXPORTED_RUNTIME_METHODS=[\"writeArrayToMemory\",\"getValue\",\"setValue\",\"registerJSCallback\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8OnStack\"] \
 -s EXPORTED_FUNCTIONS=['_test_call','_fn_no_args','_fn_args','_malloc','_fn_call_js'] \
 -s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$addFunction \
--s PTHREAD_POOL_SIZE=16 \
+-s PTHREAD_POOL_SIZE=1 \
 -s ALLOW_TABLE_GROWTH \
 -s RESERVED_FUNCTION_POINTERS=100 \
 -s ASYNCIFY=1 \

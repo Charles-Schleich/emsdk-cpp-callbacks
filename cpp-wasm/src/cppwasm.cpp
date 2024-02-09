@@ -1,5 +1,6 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/val.h>
+#include <emscripten/bind.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,6 +9,8 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 extern "C"
 {
@@ -29,6 +32,13 @@ extern "C"
   void fn_no_args()
   {
     printf("------ fn_no_args ------\n");
+    // Get Thread id    
+    std::cout << std::this_thread::get_id();
+    std::cout << std::endl;
+
+    std::cout << pthread_self();
+    std::cout << std::endl;
+
     return;
   }
 
@@ -49,11 +59,17 @@ extern "C"
       printf("C loop: %d : %d \n", loop, pointer[loop]);
     }
     printf("------ END test_call ------\n");
+        // Get Thread id    
+    std::cout << std::this_thread::get_id();
+    std::cout << std::endl;
+    std::cout << pthread_self();
+    std::cout << std::endl;
     return;
   }
 
   EM_JS(void, em_js_function, (), {
     console.log('    JS - inside C++ EM_JS Function!');
+
   });
 
   EMSCRIPTEN_KEEPALIVE
@@ -66,22 +82,26 @@ extern "C"
     EM_ASM(
         console.log('    JS - inside C++ EM_ASM Function!');
     );
+
+    // Get Thread id    
+    std::cout << std::this_thread::get_id();
+    std::cout << std::endl;
+    std::cout << pthread_self();
+    std::cout << std::endl;
+
     return;
   }
-
   
+  using namespace emscripten;
 
-  EMSCRIPTEN_KEEPALIVE
-  void invoke_function_pointer(void (*f)(void))
+  void cbTest(emscripten::val cb)
   {
-    (*f)();
+      cb();
   }
 
-  // EMSCRIPTEN_KEEPALIVE
-  // void fn_with_callback(int a, )
-  // {
-
-  // }
+  EMSCRIPTEN_BINDINGS(my_module) {
+      function("cbTest", &cbTest);
+  }
 
   // TODO: REMOVE
   EMSCRIPTEN_KEEPALIVE

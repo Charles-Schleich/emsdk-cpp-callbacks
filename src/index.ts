@@ -73,7 +73,6 @@ export class DEV {
         //     }
         // };
 
-
         // mod_instance.addFunction(function() {
         //     console.log('I was called from C world!');
         // });
@@ -101,7 +100,13 @@ export class DEV {
         console.log("Calling WasmModule.api.fn_call_js");
         await WasmModule.api.fn_call_js();
 
-        
+
+        var cbFunc = function() {
+            console.log("Hi, this is a cb");
+        }
+        // Module.cbTest(cbFunc);
+        // 
+        WasmModule.ccall('cbTest', 'number', ['number'], [cbFunc]);        
         
 
         // var pointer = WasmModule.addFunction(function() { 
