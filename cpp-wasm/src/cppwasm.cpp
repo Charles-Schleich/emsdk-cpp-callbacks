@@ -86,11 +86,15 @@ extern "C"
     return;
   }
   
-  // 
-  void cbTest(emscripten::val cb)
+  // cb : Async Function from JS
+  // cb : is a js object, ripe for fuckery 
+  int cbTest(emscripten::val cb)
   {
+    // Vals generated from C++ Land
     printf("!!! cbTest \n");
-      cb();
+    int ret = cb(5).await().as<int>();
+    printf("!!! ret %d \n",ret);
+    return ret;
   }
 
   EMSCRIPTEN_BINDINGS(my_module) {
@@ -110,7 +114,8 @@ extern "C"
     std::cout << std::this_thread::get_id() << std::endl; // Same as pthread_self()
 
     // Function returns int
-    int (*f)(int) = reinterpret_cast<int (*)(int)>(fp);
+
+    int (*f)(int) = reinterpret_cast<int (*)(int)>(fp); // Reommended by Pierre Avital
     int output = f(15);
     printf("------ FINISH fn_call_cpp_callback_js %d ------\n", output);
     return output;
