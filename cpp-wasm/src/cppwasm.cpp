@@ -15,19 +15,6 @@
 extern "C"
 {
 
-  extern void call_js_callback(int, char *, int);
-  extern void remove_js_callback(void *);
-  extern void test_call_js_callback();
-
-  // CONTINUE FROM HERE
-  // CAN I USE A FUNCTION DEFINED IN cpp-wasm.cpp to callback to a js function ?
-  // EMSCRIPTEN_KEEPALIVE
-  // EM_JS(void, test_async_function, (), {
-  //   Asyncify.handleAsync(async() = > {
-  //     console.log("Test Async Function");
-  //   });
-  // });
-
   EMSCRIPTEN_KEEPALIVE
   void fn_no_args()
   {
@@ -86,7 +73,7 @@ extern "C"
 
   // cb : Async Function from JS
   // cb : is a js object, ripe for fuckery
-  int cbTest(emscripten::val cb)
+  int cb_test_async(emscripten::val cb)
   {
     // Vals generated from C++ Land
     printf("!!! cbTest \n");
@@ -95,12 +82,17 @@ extern "C"
     return ret;
   }
 
-  // int arrTest(std::vector<unsigned char> js_arr)
+  int cb_test(emscripten::val cb)
+  {
+    // Vals generated from C++ Land
+    printf("!!! cb_test \n");
+    int ret = cb(5).as<int>();
+    printf("!!! ret %d \n", ret);
+    return ret;
+  }
+
   int arrTest(std::string js_arr)
   {
-
-    // std::vector<unsigned char> myvec = js_arr.as();
-
     // Vals generated from C++ Land
     printf("!!! arrTest \n");
     for (unsigned char item : js_arr)
@@ -112,7 +104,8 @@ extern "C"
 
   EMSCRIPTEN_BINDINGS(my_module)
   {
-    emscripten::function("cbTest", &cbTest);
+    emscripten::function("cb_test", &cb_test);
+    emscripten::function("cb_test_async", &cb_test_async);
     emscripten::function("arrTest", &arrTest);
   }
 
@@ -141,27 +134,5 @@ extern "C"
     return 99;
   }
 
-  EMSCRIPTEN_KEEPALIVE
-  void *call_js_function(void *js_callback_id)
-  {
-    int js_callback = (int)js_callback_id;
-    // Sleep Function
-    sleep(3);
-    printf("JS callback ID is: %d\n", js_callback);
-    call_js_callback(js_callback, "Hello from C", 12);
-  }
 
-  EMSCRIPTEN_KEEPALIVE void
-  call_js_function_on_another_thread(int js_callback_id)
-  {
-
-    pthread_t cb_thr;
-    pthread_create(&cb_thr, 0, &call_js_function, (void *)js_callback_id);
-  }
-
-  EMSCRIPTEN_KEEPALIVE
-  void *test_callback_js(int js_callback_id)
-  {
-    test_call_js_callback();
-  }
 }
