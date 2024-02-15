@@ -15,6 +15,7 @@ interface Module {
     cwrap(...arg: any): any,
     ccall(...arg: any): any,
     addFunction(...arg: any): any,
+    cbTest(...arg: any): any,
     api: any
 }
 
@@ -33,13 +34,17 @@ export async function wasmmodule(): Promise<Module> {
                 test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
                 fn_no_args: mod_instance.cwrap("fn_no_args", "number", [], { async: true }),
                 fn_args: mod_instance.cwrap("fn_args", "number", [], { async: true }),
-                fn_call_cpp_callback_js: mod_instance.cwrap("fn_call_cpp_callback_js", "", ["number"], { async: true }),
+                fn_call_cpp_callback_js: mod_instance.cwrap("fn_call_cpp_callback_js", "", ["number"],),
+                fn_async_call_cpp_callback_js: mod_instance.cwrap("fn_async_call_cpp_callback_js", "", ["number"], { async: true }),
+                // cbTest: mod_instance.cwrap("cbTest", "number", ["number"], { async: true }),
+
                 // 
                 malloc: mod_instance.cwrap("malloc", "number", ["number"],),
                 // Horrible
                 addFunction: mod_instance.cwrap("addFunction", "number", ["any"],),
                 // invoke_function_pointer: mod_instance.cwrap("invoke_function_pointer", "number", ["number"],)
                 fn_call_js: mod_instance.cwrap("fn_call_js", "number", [], { async: true }),
+
             };
             mod_instance.api = api;
 
@@ -65,6 +70,11 @@ function ts_callback(num: number): number {
     return 10 + num;
 }
 
+async function async_ts_callback(num: number): Promise<number> {
+    console.log("ASYNC TS CALLBACK: " , num );
+    return 10 + num;
+}
+
 export class DEV {
 
     static async runme(): Promise<number> {
@@ -72,75 +82,39 @@ export class DEV {
         const WasmModule: Module = await wasmmodule();
         // 
         console.log("TS");
-        const arr = new Uint8Array([65, 66, 67, 68]); 
+        const arr = new Uint8Array([65, 66, 67, 68]);  
         var dataPtr = WasmModule.api.malloc(arr.length);
         WasmModule.writeArrayToMemory(arr, dataPtr);
         
-        console.log("PTR", dataPtr);
-        console.log("Calling WasmModule.api.fn_no_args");
-        await WasmModule.api.fn_no_args();
-        console.log("Calling WasmModule.api.fn_args");
-        await WasmModule.api.fn_args(100, dataPtr, 4);
-        console.log("Calling WasmModule.api.fn_call_js");
+        // TS -> C : Function Calls 
+        // console.log("PTR", dataPtr);
+        // console.log("Calling WasmModule.api.fn_no_args");
+        // await WasmModule.api.fn_no_args();
+        // console.log("Calling WasmModule.api.fn_args");
+        // await WasmModule.api.fn_args(100, dataPtr, 4);
+        // console.log("Calling WasmModule.api.fn_call_js");
         // await WasmModule.api.fn_call_js();
 
-        // Via API does not work
-        // console.log("WasmModule.api.addFunction(ts_callback);");
-        // WasmModule.api.addFunction(ts_callback);
+        // CALLBACKS 
+
+        // CALLBACK SYNC 
         console.log("WasmModule.addFunction(ts_callback);");
+        let fp_sync = WasmModule.addFunction(ts_callback,'ii');
+        let ret_sync  = await WasmModule.api.fn_call_cpp_callback_js(fp_sync);
+        console.log("Callback Value ", ret_sync);
 
-        let fp_num = WasmModule.addFunction(ts_callback,'ii');
-        console.log("fp_num", fp_num);
-        
-        let return_val  = await WasmModule.api.fn_call_cpp_callback_js(fp_num);
-        console.log("Callback Value ", return_val);
-        
+        // CALLBACK ASYNC        
+        console.log("WasmModule.addFunction(async_ts_callback);");
+        let answer = await WasmModule.cbTest(async_ts_callback);
+        console.log("answer ?? ", answer);
 
+//         let return_val  = await WasmModule.api.fn_async_call_cpp_callback_js(fp_async);
+//         console.log("Callback Value ", return_val);
 
-        // GABRIELES METHOD OF ADDING A FUNCTION
-        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
-        // console.log("JS Callback id")
-        // console.log(fn_callback)
-        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
-        // console.log("JS Callback id")
-        // console.log(fn_callback)
-        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
-        // console.log("JS Callback id")
-        // console.log(fn_callback)
-
-
-        // var cbFunc = function() {
-        //     console.log("Hi, this is a cb");
-        // }
-
-        // WasmModule.ccall('cbTest', 'number', ['number'], [cbFunc]);        
-
-        // (ident, returnType, argTypes, args, opts)
-
-        // var pointer = WasmModule.addFunction(function() { 
-        //     console.log('I was called from C world!'); 
-        //   });
-
-        // WasmModule.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
-        // WasmModule.removeFunction(pointer);
-        
-        // Module.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
-        
-        // 
-        // var pointer = Runtime.addFunction(function() { 
-        //      console.log('I was called from C world!'); 
-        // });
-        // Module.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
-        // Runtime.removeFunction(pointer);
-
-          
-        // WasmModule
-        // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
-        // await WasmModule.api.test_call(dataPtr, arr.length, ts_callback);
-        console.log("--??????");
-        
         console.log("--DEV End");
 
         return 10;
     }
 }
+
+
