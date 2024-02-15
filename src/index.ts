@@ -12,8 +12,6 @@ interface Module {
     cwrap(...arg: any): any,
     ccall(...arg: any): any,
     addFunction(...arg: any): any,
-    // This doesnt look like it works
-    // _malloc(...arg:any) : any,
     api: any
 }
 
@@ -57,36 +55,7 @@ export class DEV {
     static async runme(): Promise<number> {
 
         const WasmModule: Module = await wasmmodule();
-
-        // const arr = new Uint8Array([65, 66, 67, 68]);
-
-        // let dataPtr = await WasmModule.api._z_malloc(arr.length);
-
-        // WasmModule.writeArrayToMemory(arr, dataPtr);
-
-        // let cb = async function () {
-        //     var c = 0;
-        //     while (c < 10) {
-        //         console.log("What is my purpose ? You log");
-        //         console.log("Oh my god");
-        //         c++
-        //     }
-        // };
-
-        // mod_instance.addFunction(function() {
-        //     console.log('I was called from C world!');
-        // });
-
-        // var pointer = WasmModule.api.addFunction(function() {
-        //     console.log('I was called from C world!');
-        // });
-        // mod_instance.ccall('invoke_function_pointer', 'number', ['number'], [pointer]);
-        
-        //////////////////////////////////////
-        // Ready for the explosion
-        // WasmModule.removeFunction(pointer);
-        //////////////////////////////////////
-
+        // 
         console.log("TS");
         const arr = new Uint8Array([65, 66, 67, 68]); 
         var dataPtr = WasmModule.api.malloc(arr.length);
@@ -104,10 +73,10 @@ export class DEV {
         var cbFunc = function() {
             console.log("Hi, this is a cb");
         }
-        // Module.cbTest(cbFunc);
-        // 
+
         WasmModule.ccall('cbTest', 'number', ['number'], [cbFunc]);        
-        
+
+        // (ident, returnType, argTypes, args, opts)
 
         // var pointer = WasmModule.addFunction(function() { 
         //     console.log('I was called from C world!'); 
