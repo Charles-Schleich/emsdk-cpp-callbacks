@@ -27,14 +27,14 @@ set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
 --bind \
 -s TEXTDECODER=0 \
 -s ENVIRONMENT=web,worker \
--s EXPORTED_RUNTIME_METHODS=[\"writeArrayToMemory\",\"getValue\",\"setValue\",\"registerJSCallback\",\"cwrap\",\"UTF8ToString\",\"stringToUTF8OnStack\"] \
--s EXPORTED_FUNCTIONS=['_test_call','_fn_no_args','_fn_args','_malloc','_fn_call_js'] \
+-s EXPORTED_RUNTIME_METHODS=['writeArrayToMemory','getValue','setValue','registerJSCallback','cwrap','UTF8ToString','stringToUTF8OnStack'] \
+-s EXPORTED_FUNCTIONS=['_fn_no_args','_fn_args','_malloc','_fn_call_js','_fn_call_cpp_callback_js','addFunction'] \
 -s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$addFunction \
 -s PTHREAD_POOL_SIZE=1 \
 -s ALLOW_TABLE_GROWTH \
 -s RESERVED_FUNCTION_POINTERS=100 \
 -s ASYNCIFY=1 \
--s ASYNCIFY_IMPORTS=[\"ts_callback\"] \
+-s ASYNCIFY_IMPORTS=['ts_callback'] \
 -s ASYNCIFY_STACK_SIZE=65535 \
 -s EXPORT_ES6=1 \
 -s MODULARIZE=1 \
@@ -43,6 +43,7 @@ set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
 -s EXPORT_ALL=1 \
 -s EXPORT_NAME=cppWasm \
 -s ALLOW_TABLE_GROWTH \
+-s RESERVED_FUNCTION_POINTERS=20 \
 -pthread \
 -fPIC ")
 

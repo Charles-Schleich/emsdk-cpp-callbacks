@@ -1,6 +1,9 @@
 
 import Module from "./wasm/cpp-wasm.js"
 
+
+
+
 // TODO : Clean up Any's with proper types
 interface Module {
     stringToUTF8OnStack(x: string): any,
@@ -24,12 +27,13 @@ export async function wasmmodule(): Promise<Module> {
             const api = {
                 //
                 _test_call_js_callback: mod_instance.cwrap("test_call_js_callback", "number", [], { async: true }),
+                // registerJSCallback
                 _register_rm_callback: mod_instance.cwrap("register_rm_callback", "void", ["number"], { async: true }),
                 // To allocate memory
                 test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
                 fn_no_args: mod_instance.cwrap("fn_no_args", "number", [], { async: true }),
                 fn_args: mod_instance.cwrap("fn_args", "number", [], { async: true }),
-                // 
+                fn_call_cpp_callback_js: mod_instance.cwrap("fn_call_cpp_callback_js", "", ["number"], { async: true }),
                 // 
                 malloc: mod_instance.cwrap("malloc", "number", ["number"],),
                 // Horrible
@@ -45,10 +49,21 @@ export async function wasmmodule(): Promise<Module> {
     return mod_instance
 }
 
-// async function ts_callback(): Promise<number> {
-//     console.log("TS CALLBACK ");
-//     return 10;
-// }
+
+
+// Callback Signature Argument formatting for addFunction
+// Example: `vi` - return void fn(i32)
+// 'v': void type
+// 'i': 32-bit integer type
+// 'j': 64-bit integer type (currently does not exist in JavaScript)
+// 'f': 32-bit float type
+// 'd': 64-bit float type
+
+
+function ts_callback(num: number): number {
+    console.log("TS CALLBACK: " , num );
+    return 10 + num;
+}
 
 export class DEV {
 
@@ -67,14 +82,38 @@ export class DEV {
         console.log("Calling WasmModule.api.fn_args");
         await WasmModule.api.fn_args(100, dataPtr, 4);
         console.log("Calling WasmModule.api.fn_call_js");
-        await WasmModule.api.fn_call_js();
+        // await WasmModule.api.fn_call_js();
+
+        // Via API does not work
+        // console.log("WasmModule.api.addFunction(ts_callback);");
+        // WasmModule.api.addFunction(ts_callback);
+        console.log("WasmModule.addFunction(ts_callback);");
+
+        let fp_num = WasmModule.addFunction(ts_callback,'ii');
+        console.log("fp_num", fp_num);
+        
+        let return_val  = await WasmModule.api.fn_call_cpp_callback_js(fp_num);
+        console.log("Callback Value ", return_val);
+        
 
 
-        var cbFunc = function() {
-            console.log("Hi, this is a cb");
-        }
+        // GABRIELES METHOD OF ADDING A FUNCTION
+        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
+        // console.log("JS Callback id")
+        // console.log(fn_callback)
+        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
+        // console.log("JS Callback id")
+        // console.log(fn_callback)
+        // var fn_callback = await WasmModule.api.registerJSCallback(ts_callback);
+        // console.log("JS Callback id")
+        // console.log(fn_callback)
 
-        WasmModule.ccall('cbTest', 'number', ['number'], [cbFunc]);        
+
+        // var cbFunc = function() {
+        //     console.log("Hi, this is a cb");
+        // }
+
+        // WasmModule.ccall('cbTest', 'number', ['number'], [cbFunc]);        
 
         // (ident, returnType, argTypes, args, opts)
 

@@ -33,10 +33,7 @@ extern "C"
   {
     printf("------ fn_no_args ------\n");
     // Get Thread id    
-    std::cout << std::this_thread::get_id();
-    std::cout << std::endl;
-
-    std::cout << pthread_self();
+    std::cout << std::this_thread::get_id(); // Same as pthread_self()
     std::cout << std::endl;
 
     return;
@@ -60,10 +57,9 @@ extern "C"
     }
     printf("------ END test_call ------\n");
         // Get Thread id    
-    std::cout << std::this_thread::get_id();
+    std::cout << std::this_thread::get_id(); // Same as pthread_self()
     std::cout << std::endl;
-    std::cout << pthread_self();
-    std::cout << std::endl;
+
     return;
   }
 
@@ -83,10 +79,8 @@ extern "C"
         console.log('    JS - inside C++ EM_ASM Function!');
     );
 
-    // Get Thread id    
-    std::cout << std::this_thread::get_id();
-    std::cout << std::endl;
-    std::cout << pthread_self();
+    // Get Thread id
+    std::cout << std::this_thread::get_id(); // Same as pthread_self()
     std::cout << std::endl;
 
     return;
@@ -103,31 +97,30 @@ extern "C"
       function("cbTest", &cbTest);
   }
 
-  // TODO: REMOVE
+
+
   EMSCRIPTEN_KEEPALIVE
-  void test_call(char *pointer, int length, emscripten::val callback)
+  int fn_call_cpp_callback_js(int fp)
   {
-    printf("------ test_call ------\n");
-    // printf("      C test_call Ptr     %p  \n", pointer);
-    // printf("      C test_call Ptr num %d \n", pointer);
-    // printf("      C test_call Len %d  \n", length);
+    printf("------ fn_call_cpp_callback_js ------\n");
+    printf("calling %d \n",fp);
 
-    int length2 = sizeof(length) / sizeof(char);
+    // Get Thread id
+    std::cout << std::this_thread::get_id(); // Same as pthread_self()
+    std::cout << std::endl;
 
-    int loop;
-    for (loop = 0; loop < length2; loop++)
-    {
-      printf("C loop: %d : %d \n", loop, pointer[loop]);
-    }
-    printf("------ END test_call ------\n");
+    // Function returns void
+    // void (*f)(int) = reinterpret_cast<void (*)(int)>(fp);
+    // f(15);
+    // int output = 15;
 
-    printf("Call callback().await()\n");
+    // Function returns int
+    int (*f)(int) = reinterpret_cast<int (*)(int)>(fp);
+    int output = f(15);
+    printf("------ %d ------ \n", output);
 
-    emscripten::val return_val = callback().await();
-
-    printf("------ callback().await() ------\n");
-
-    return;
+    printf("------ FINISH fn_call_cpp_callback_js ------\n");
+    return output;
   }
 
   EMSCRIPTEN_KEEPALIVE
