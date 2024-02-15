@@ -16,6 +16,7 @@ interface Module {
     ccall(...arg: any): any,
     addFunction(...arg: any): any,
     cbTest(...arg: any): any,
+    arrTest(...arg: any): any,
     api: any
 }
 
@@ -104,9 +105,16 @@ export class DEV {
         console.log("Callback Value ", ret_sync);
 
         // CALLBACK ASYNC        
-        console.log("WasmModule.addFunction(async_ts_callback);");
+        console.log("WasmModule.cbTest(async_ts_callback);");
         let answer = await WasmModule.cbTest(async_ts_callback);
         console.log("answer ?? ", answer);
+
+        console.log("WasmModule.arrTest();");
+        // let answer2 = await WasmModule.arrTest([65, 66, 67, 68]);
+        // let answer2 = await WasmModule.arrTest("ABC");
+        let answer2 = await WasmModule.arrTest(arr);
+        console.log("answer ?? ", answer2);
+        
 
 //         let return_val  = await WasmModule.api.fn_async_call_cpp_callback_js(fp_async);
 //         console.log("Callback Value ", return_val);

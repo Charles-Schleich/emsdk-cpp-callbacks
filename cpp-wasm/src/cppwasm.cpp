@@ -32,7 +32,7 @@ extern "C"
   void fn_no_args()
   {
     printf("------ fn_no_args ------\n");
-    // Get Thread id    
+    // Get Thread id
     std::cout << std::this_thread::get_id(); // Same as pthread_self()
     std::cout << std::endl;
 
@@ -56,7 +56,7 @@ extern "C"
       printf("C loop: %d : %d \n", loop, pointer[loop]);
     }
     printf("------ END test_call ------\n");
-        // Get Thread id    
+    // Get Thread id
     std::cout << std::this_thread::get_id(); // Same as pthread_self()
     std::cout << std::endl;
 
@@ -65,7 +65,6 @@ extern "C"
 
   EM_JS(void, em_js_function, (), {
     console.log('    JS - inside C++ EM_JS Function!');
-
   });
 
   EMSCRIPTEN_KEEPALIVE
@@ -76,8 +75,7 @@ extern "C"
     em_js_function();
 
     EM_ASM(
-        console.log('    JS - inside C++ EM_ASM Function!');
-    );
+        console.log('    JS - inside C++ EM_ASM Function!'););
 
     // Get Thread id
     std::cout << std::this_thread::get_id(); // Same as pthread_self()
@@ -85,30 +83,46 @@ extern "C"
 
     return;
   }
-  
+
   // cb : Async Function from JS
-  // cb : is a js object, ripe for fuckery 
+  // cb : is a js object, ripe for fuckery
   int cbTest(emscripten::val cb)
   {
     // Vals generated from C++ Land
     printf("!!! cbTest \n");
     int ret = cb(5).await().as<int>();
-    printf("!!! ret %d \n",ret);
+    printf("!!! ret %d \n", ret);
     return ret;
   }
 
-  EMSCRIPTEN_BINDINGS(my_module) {
-      emscripten::function("cbTest", &cbTest);
+  // int arrTest(std::vector<unsigned char> js_arr)
+  int arrTest(std::string js_arr)
+  {
+
+    // std::vector<unsigned char> myvec = js_arr.as();
+
+    // Vals generated from C++ Land
+    printf("!!! arrTest \n");
+    for (unsigned char item : js_arr)
+    {
+      std::cout << item << std::endl;
+    }
+    return 10;
   }
 
+  EMSCRIPTEN_BINDINGS(my_module)
+  {
+    emscripten::function("cbTest", &cbTest);
+    emscripten::function("arrTest", &arrTest);
+  }
 
-// TODO : Investigate
-//  https://emscripten.org/docs/api_reference/val.h.html#_CPPv4NK10emscripten10emscripten3valcv8co_awaitEv
+  // TODO : Investigate
+  //  https://emscripten.org/docs/api_reference/val.h.html#_CPPv4NK10emscripten10emscripten3valcv8co_awaitEv
   EMSCRIPTEN_KEEPALIVE
   int fn_call_cpp_callback_js(int fp)
   {
     printf("------ fn_call_cpp_callback_js ------\n");
-    printf("calling %d \n",fp);
+    printf("calling %d \n", fp);
 
     // Get Thread id
     std::cout << std::this_thread::get_id() << std::endl; // Same as pthread_self()
@@ -124,9 +138,8 @@ extern "C"
   EMSCRIPTEN_KEEPALIVE
   int fn_async_call_cpp_callback_js(emscripten::val fp)
   {
-      return 99;  
+    return 99;
   }
-
 
   EMSCRIPTEN_KEEPALIVE
   void *call_js_function(void *js_callback_id)
