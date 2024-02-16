@@ -21,14 +21,10 @@ set(WASM_BUILD_FLAGS " \
 -pthread \
 -fPIC")
 
-# func-wrapper Adds a JS-Callback to be passed to C to be used. 
-# TODO more functions exposed via Exported_functions
-set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
---bind \
--s TEXTDECODER=0 \
+set(WASM_LINK_FLAGS "--bind \
 -s ENVIRONMENT=web,worker \
 -s EXPORTED_RUNTIME_METHODS=['writeArrayToMemory','getValue','setValue','registerJSCallback','cwrap','UTF8ToString','stringToUTF8OnStack'] \
--s EXPORTED_FUNCTIONS=['_fn_no_args','_fn_args','_malloc','_fn_call_js','_fn_call_cpp_callback_js','_fn_async_call_cpp_callback_js','addFunction'] \
+-s EXPORTED_FUNCTIONS=['_fn_no_args','_fn_args','_malloc','_fn_call_js','_fn_call_cpp_callback_js','addFunction'] \
 -s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$addFunction \
 -s PTHREAD_POOL_SIZE=1 \
 -s ALLOW_TABLE_GROWTH \
@@ -47,14 +43,6 @@ set(WASM_LINK_FLAGS "--js-library=${CMAKE_SOURCE_DIR}/func-wrapper.js \
 -pthread \
 -fPIC \
 -lembind")
-
-# -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-# TODO: Get exported Functions flag to work later
-# Cannot Export Types for C files
-# Need to figure out how to emit types for C files
-#  --embind-emit-tsd =${CMAKE_SOURCE_DIR}/cpp-wasm.d.ts \
-# can emit types for C++, add C++ interface file to make emitting types easier ?
-# set(TYPE_GENERATION_FLAG "-lembind --embind-emit-tsd /src/cpp-wasm/build.emscripten/cpp-wasm.d.ts")
 
 add_executable(cpp-wasm src/cppwasm.cpp)
 set_target_properties(cpp-wasm PROPERTIES LINK_FLAGS ${WASM_LINK_FLAGS} )
