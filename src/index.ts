@@ -1,18 +1,26 @@
 import Module from "./wasm/cpp-wasm.js"
 
-// TODO : Clean up Any's with proper types
+
+
 interface Module {
-    stringToUTF8OnStack(str: string): any,
+
+    // Intitialize Runtime
     onRuntimeInitialized(): Promise<any>,
-    writeArrayToMemory(array: Uint8Array, buffer: number): null, // TODO: Returns None ?
-    // Horrible horrible horribleness
-    cwrap(...arg: any): any,
-    ccall(...arg: any): any,
-    addFunction(...arg: any): any,
+
+    // So that we can read and write into the WASM binary
+    writeArrayToMemory(array: Uint8Array, buffer: number): null,
+
+    // This is the original function signature of cwrap and im leaving it here to 
+    cwrap(ident: string, returnType: string, argTypes: string[], opts: any): any,
+    cwrap(ident: string, returnType: string, argTypes: string[]): any,
+
+    // Add Function, Accepts any function and needs a function Signature, More info Belows
+    addFunction(func: (...arg: any) => any, sig: string): any,
+
     // Async Callbacks with Emscripten Automagically
     callback_test(...arg: any): any,
     callback_test_async(...arg: any): any,
-    // 
+
     pass_arr_cpp(...arg: any): any,
     api: any
 }
@@ -25,15 +33,12 @@ export async function wasmmodule(): Promise<Module> {
         mod_instance = await Module();
         mod_instance.onRuntimeInitialized = async () => {
             const api = {
-
-                _test_call_js_callback: mod_instance.cwrap("test_call_js_callback", "number", [], { async: true }),
-                test_call: mod_instance.cwrap("test_call", "number", ["number", "number", "number"], { async: true }),
+                malloc: mod_instance.cwrap("malloc", "number", ["number"]),
+                //
                 fn_no_args: mod_instance.cwrap("fn_no_args", "number", []),
                 fn_args: mod_instance.cwrap("fn_args", "number", []),
+                // Callbacks 
                 fn_call_cpp_callback_js: mod_instance.cwrap("fn_call_cpp_callback_js", "", ["number"]),
-                malloc: mod_instance.cwrap("malloc", "number", ["number"]),
-
-                // Horrible
                 fn_call_js: mod_instance.cwrap("fn_call_js", "number", [], { async: true }),
             };
             mod_instance.api = api;
@@ -109,7 +114,6 @@ export class DEV {
     }
 
     static async call_CPP_function_with_TS_Callback() {
-
 
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
 
