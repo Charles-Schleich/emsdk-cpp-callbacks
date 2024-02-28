@@ -38,6 +38,11 @@ With Async, and callbacks from TS
   - The compiling the typescript interface to Javascript, and exporting a types declaration file.
   - Webpack to package
 
+> :warning: **WARNING** :warning: : Important Info regarding embind and Threads   
+embind referes to JS objects which cannot be shared between threads.   
+Basically, embind only works on a per-thread bases.  
+If you want to proxy work to other threads it cannot involved embind object.  
+
 
 
 ## Running the Examples

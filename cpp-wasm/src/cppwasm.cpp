@@ -94,7 +94,6 @@ extern "C"
 
   int callback_test(emscripten::val cb)
   {
-    // Vals generated from C++ Land
     printf("------ callback_test ------\n");
 
     int ret = cb(5).as<int>();
@@ -115,6 +114,7 @@ extern "C"
     return 10;
   }
 
+  // Macro to Expose Functions
   EMSCRIPTEN_BINDINGS(my_module)
   {
     emscripten::function("callback_test", &callback_test);

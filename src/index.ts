@@ -20,8 +20,8 @@ interface Module {
     // Async Callbacks with Emscripten Automagically
     callback_test(...arg: any): any,
     callback_test_async(...arg: any): any,
-
     pass_arr_cpp(...arg: any): any,
+    // 
     api: any
 }
 
