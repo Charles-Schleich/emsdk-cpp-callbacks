@@ -1,6 +1,13 @@
+// To expose EMSCRIPTEN_BINDINGS
 #include <emscripten/emscripten.h>
+// Expose JS Types
 #include <emscripten/val.h>
+// To expose EMSCRIPTEN_BINDINGS
 #include <emscripten/bind.h>
+// To Expose ProxyingQueue
+#include <emscripten/proxying.h>
+#include <emscripten/eventloop.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,6 +19,28 @@
 #include <thread>
 #include <chrono>
 
+
+// The worker threads we will use. `looper` sits in a loop, continuously
+// processing work as it becomes available, while `returner` returns to the JS
+// event loop each time it processes work.
+std::thread looper;
+std::thread returner;
+
+std::atomic<bool> should_quit{false};
+
+void looper_main() {
+  while (!should_quit) {
+    queue.execute();
+    sched_yield();
+  }
+}
+
+// TODO:Continue from here
+// https://github.com/emscripten-core/emscripten/blob/main/test/pthread/test_pthread_proxying_cpp.cpp
+// https://emscripten.org/docs/api_reference/proxying.h.html?highlight=proxying
+
+// TODO : Do i need these in a C interface ? 
+// Can i abstract out the C++
 extern "C"
 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +143,16 @@ extern "C"
     return 10;
   }
 
-  // Macro to Expose Functions
+  int callback_test_async_proxying(emscripten::val cb)
+  {
+    printf("------ callback_test_async ------\n");
+   
+    int ret = cb(5).await().as<int>();
+
+    return ret;
+  }
+
+  // Macro to Expose Functions Automagically
   EMSCRIPTEN_BINDINGS(my_module)
   {
     emscripten::function("callback_test", &callback_test);
