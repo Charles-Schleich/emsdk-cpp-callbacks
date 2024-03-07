@@ -169,6 +169,62 @@ int pass_arr_cpp(std::string js_arr)
 // ██      ██      ██                    ██      ██   ██ ██    ██  ██ ██     ██    ██ ██  ██ ██ ██    ██
 //  ██████ ██      ██                    ██      ██   ██  ██████  ██   ██    ██    ██ ██   ████  ██████
 
+
+void test_proxy_async(emscripten::val cb) {
+  std::cout << "Testing async proxying\n";
+
+  int i = 0;
+
+  std::mutex mutex;
+  std::condition_variable cond;
+  std::thread::id executor;
+  
+  std::cout << "  Main Thread ID: " << executor <<" \n";
+
+  // Proxy to ourselves.
+  queue.proxyAsync(pthread_self(), [&]() {
+    i = 1;
+    executor = std::this_thread::get_id();
+  });
+  assert(i == 0);
+  queue.execute();
+  assert(i == 1);
+  assert(executor == std::this_thread::get_id());
+
+  // Proxy to looper.
+  {
+    queue.proxyAsync(looper.native_handle(), [&]() {
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        i = 2;
+      }
+      executor = std::this_thread::get_id();
+      std::cout << "    Proxy Looper Thread ID: " << executor <<" \n";
+      cond.notify_one();
+    });
+    std::unique_lock<std::mutex> lock(mutex);
+    cond.wait(lock, [&]() { return i == 2; });
+    assert(executor == looper.get_id());
+  }
+
+  // Proxy to returner.
+  {
+    queue.proxyAsync(returner.native_handle(), [&]() {
+      {
+        std::unique_lock<std::mutex> lock(mutex);
+        i = 3;
+      }
+      executor = std::this_thread::get_id();
+      std::cout << "    Proxy returner Thread ID: " << executor <<" \n";
+      cond.notify_one();
+    });
+    std::unique_lock<std::mutex> lock(mutex);
+    cond.wait(lock, [&]() { return i == 3; });
+    assert(executor == returner.get_id());
+  }
+}
+
+
 int callback_test_async_proxying(emscripten::val cb)
 {
   printf("------ callback_test_async_proxying ------\n");
@@ -176,7 +232,10 @@ int callback_test_async_proxying(emscripten::val cb)
   looper = std::thread(looper_main);
   returner = std::thread(returner_main);
 
-  // test_proxy_async();
+  printf("------ test_proxy_async ------\n");
+  test_proxy_async(cb);
+  printf("------ test_proxy_async ------\n");
+
   // test_proxy_sync();
   // test_proxy_sync_with_ctx();
   // test_proxy_callback();
@@ -192,6 +251,8 @@ int callback_test_async_proxying(emscripten::val cb)
 
   return 10;
 }
+
+
 
 // Macro to Expose Functions Automagically
 EMSCRIPTEN_BINDINGS(my_module)

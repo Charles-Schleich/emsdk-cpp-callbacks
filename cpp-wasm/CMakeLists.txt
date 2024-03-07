@@ -32,6 +32,7 @@ set(WASM_LINK_FLAGS "--bind \
 -s ASYNCIFY=1 \
 -s ASYNCIFY_IMPORTS=['ts_callback','async_ts_callback'] \
 -s ASYNCIFY_STACK_SIZE=65535 \
+-s PTHREAD_POOL_SIZE=16 \
 -s EXPORT_ES6=1 \
 -s MODULARIZE=1 \
 -s USE_ES6_IMPORT_META=1 \

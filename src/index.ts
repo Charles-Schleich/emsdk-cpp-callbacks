@@ -30,6 +30,9 @@ interface Module {
     callback_test_async(...arg: any): any,
     pass_arr_cpp(...arg: any): any,
 
+    // Async Callbacks with Emscripten Automagically
+    callback_test_async_proxying(...arg: any): any,
+
     // api ??
     api: any
 }
@@ -179,7 +182,7 @@ export class DEV {
 
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
         const WasmModule: Module = await wasmmodule();
-        let ret_val_async_1 = await WasmModule.callback_test_async(async_ts_callback);
+        let ret_val_async_1 = await WasmModule.callback_test_async_proxying(async_ts_callback);
         console.log("Return Value: ", ret_val_async_1);
 
 
