@@ -2,6 +2,35 @@ import Module from "./wasm/cpp-wasm.js"
 
 
 
+const C_FN_CALLS: string = " \
+ ██████               ███████ ███    ██      ██████  █████  ██      ██      ███████ \n \
+██                    ██      ████   ██     ██      ██   ██ ██      ██      ██      \n \
+██          █████     █████   ██ ██  ██     ██      ███████ ██      ██      ███████ \n \
+██                    ██      ██  ██ ██     ██      ██   ██ ██      ██           ██ \n \
+ ██████               ██      ██   ████      ██████ ██   ██ ███████ ███████ ███████ ";
+
+const CPP_FN_CALLS: string = " \
+ ██████ ██████  ██████                ███████ ███    ██      ██████  █████  ██      ██      ███████ \n \
+██      ██   ██ ██   ██               ██      ████   ██     ██      ██   ██ ██      ██      ██      \n \
+██      ██████  ██████      █████     █████   ██ ██  ██     ██      ███████ ██      ██      ███████ \n \
+██      ██      ██                    ██      ██  ██ ██     ██      ██   ██ ██      ██           ██ \n \
+ ██████ ██      ██                    ██      ██   ████      ██████ ██   ██ ███████ ███████ ███████ ";
+
+const CPP_FN_WITH_TS_CALLBACKS: string = " \
+ ██████ ██████  ██████                ███████ ███    ██     ██     ██ ██ ████████ ██   ██     ████████ ███████      ██████  █████  ██      ██      ██████   █████   ██████ ██   ██ ███████ \n \
+██      ██   ██ ██   ██               ██      ████   ██     ██     ██ ██    ██    ██   ██        ██    ██          ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██  ██      \n \
+██      ██████  ██████      █████     █████   ██ ██  ██     ██  █  ██ ██    ██    ███████        ██    ███████     ██      ███████ ██      ██      ██████  ███████ ██      █████   ███████ \n \
+██      ██      ██                    ██      ██  ██ ██     ██ ███ ██ ██    ██    ██   ██        ██         ██     ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██       ██ \n \
+ ██████ ██      ██                    ██      ██   ████      ███ ███  ██    ██    ██   ██        ██    ███████      ██████ ██   ██ ███████ ███████ ██████  ██   ██  ██████ ██   ██ ███████ ";
+
+ const CPP_FN__TS_CB_PROXY: string = " \
+ ██████ ██████  ██████                ███████ ███    ██     ████████ ███████      ██████ ██████      ██████  ██████   ██████  ██   ██ ██    ██ \n \
+██      ██   ██ ██   ██               ██      ████   ██        ██    ██          ██      ██   ██     ██   ██ ██   ██ ██    ██  ██ ██   ██  ██  \n \
+██      ██████  ██████      █████     █████   ██ ██  ██        ██    ███████     ██      ██████      ██████  ██████  ██    ██   ███     ████   \n \
+██      ██      ██                    ██      ██  ██ ██        ██         ██     ██      ██   ██     ██      ██   ██ ██    ██  ██ ██     ██    \n \
+ ██████ ██      ██                    ██      ██   ████        ██    ███████      ██████ ██████      ██      ██   ██  ██████  ██   ██    ██    ";
+
+ 
 interface Module {
 
     // Intitialize Runtime
@@ -62,6 +91,8 @@ async function async_ts_callback(num: number): Promise<number> {
 export class DEV {
 
     static async call_functions_C_style() {
+
+        console.log(C_FN_CALLS);
         console.log("Start : C method of Calling Functions");
 
         const WasmModule: Module = await wasmmodule();
@@ -97,6 +128,7 @@ export class DEV {
     }
 
     static async call_functions_CPP_style(): Promise<number> {
+        console.log(CPP_FN_CALLS);
         console.log("Start : C++ method of Calling Functions");
 
         const WasmModule: Module = await wasmmodule();
@@ -114,6 +146,7 @@ export class DEV {
     }
 
     static async call_CPP_function_with_TS_Callback() {
+        console.log(CPP_FN_WITH_TS_CALLBACKS);
 
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
 
@@ -133,8 +166,15 @@ export class DEV {
         let ret_val_async = await WasmModule.callback_test_async(async_ts_callback);
         console.log("Return Value: ", ret_val_async);
         console.log("=====================================");
+    }
+
+    static async call_CPP_function_with_TS_Callback_Proxied() {
+        console.log(CPP_FN__TS_CB_PROXY);
+
+        console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
+
+        // const WasmModule: Module = await wasmmodule();
 
     }
+
 }
-
-

@@ -1,23 +1,14 @@
 // To expose EMSCRIPTEN_BINDINGS
-#include <emscripten/emscripten.h>
-// Expose JS Types
-#include <emscripten/val.h>
-// To expose EMSCRIPTEN_BINDINGS
 #include <emscripten/bind.h>
-// To Expose ProxyingQueue
+// To Expose ProxyingQueue ???
 #include <emscripten/proxying.h>
+// TODO: For what ? 
 #include <emscripten/eventloop.h>
-
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+// TODO: Sched for what 
+#include <sched.h>
 #include <string.h>
-#include <unistd.h>
-#include <cstdlib>
+// For what ? 
 #include <iostream>
-#include <thread>
-#include <chrono>
 
 
 // The worker threads we will use. `looper` sits in a loop, continuously
@@ -26,13 +17,27 @@
 std::thread looper;
 std::thread returner;
 
+// The queue used to send work to both `looper` and `returner`.
+emscripten::ProxyingQueue queue;
+
+// Whether `looper` should exit.
 std::atomic<bool> should_quit{false};
 
+// 
 void looper_main() {
   while (!should_quit) {
     queue.execute();
     sched_yield();
   }
+}
+
+// 
+void returner_main() {
+  // Return back to the event loop while keeping the runtime alive.
+  // Note that we can't use `emscripten_exit_with_live_runtime` here without
+  // introducing a memory leak due to way to C++11 threads interact with
+  // unwinding. See https://github.com/emscripten-core/emscripten/issues/17091.
+  emscripten_runtime_keepalive_push();
 }
 
 // TODO:Continue from here
@@ -44,7 +49,12 @@ void looper_main() {
 extern "C"
 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // C Functions
+//  ██████                ██████  █████  ██      ██      ██████   █████   ██████ ██   ██ ███████ 
+// ██                    ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██  ██      
+// ██          █████     ██      ███████ ██      ██      ██████  ███████ ██      █████   ███████ 
+// ██                    ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██       ██ 
+//  ██████                ██████ ██   ██ ███████ ███████ ██████  ██   ██  ██████ ██   ██ ███████ 
+                                                                                              
   EMSCRIPTEN_KEEPALIVE
   void fn_no_args()
   {
@@ -71,9 +81,17 @@ extern "C"
     }
   }
 
+
+//  ██████ ██████  ██████                 ██████  █████  ██      ██      ██████   █████   ██████ ██   ██ ███████ 
+// ██      ██   ██ ██   ██               ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██  ██      
+// ██      ██████  ██████      █████     ██      ███████ ██      ██      ██████  ███████ ██      █████   ███████ 
+// ██      ██      ██                    ██      ██   ██ ██      ██      ██   ██ ██   ██ ██      ██  ██       ██ 
+//  ██████ ██      ██                     ██████ ██   ██ ███████ ███████ ██████  ██   ██  ██████ ██   ██ ███████ 
+
   EM_JS(void, em_js_function, (), {
     console.log('    JS - inside C++ EM_JS Macro!');
   });
+
 
   EMSCRIPTEN_KEEPALIVE
   void fn_call_js()
@@ -143,14 +161,25 @@ extern "C"
     return 10;
   }
 
+//  ██████ ██████  ██████                ██████  ██████   ██████  ██   ██ ██    ██ ██ ███    ██  ██████      
+// ██      ██   ██ ██   ██               ██   ██ ██   ██ ██    ██  ██ ██   ██  ██  ██ ████   ██ ██           
+// ██      ██████  ██████      █████     ██████  ██████  ██    ██   ███     ████   ██ ██ ██  ██ ██   ███     
+// ██      ██      ██                    ██      ██   ██ ██    ██  ██ ██     ██    ██ ██  ██ ██ ██    ██     
+//  ██████ ██      ██                    ██      ██   ██  ██████  ██   ██    ██    ██ ██   ████  ██████      
+                                                                                                          
+                                                                                                          
+
   int callback_test_async_proxying(emscripten::val cb)
   {
-    printf("------ callback_test_async ------\n");
+    printf("------ callback_test_async_proxying ------\n");
    
     int ret = cb(5).await().as<int>();
 
     return ret;
   }
+
+
+
 
   // Macro to Expose Functions Automagically
   EMSCRIPTEN_BINDINGS(my_module)

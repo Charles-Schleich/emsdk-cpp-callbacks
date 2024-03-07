@@ -4,11 +4,15 @@ import * as cppwasm from "../../../esm"
 
 async function main() {
     console.log("Start");
-
-    cppwasm.DEV.call_functions_C_style();
+    // 
+    await cppwasm.DEV.call_functions_C_style();
+    // 
     await cppwasm.DEV.call_functions_CPP_style();
+    // 
     await cppwasm.DEV.call_CPP_function_with_TS_Callback();
-  
+    // 
+    await cppwasm.DEV.call_CPP_function_with_TS_Callback_Proxied();
+    // 
     console.log("End");
 
 }
