@@ -17,11 +17,20 @@ interface Module {
     // Add Function, Accepts any function and needs a function Signature, More info Belows
     addFunction(func: (...arg: any) => any, sig: string): any,
 
+    // C Style Calls
+    fn_call_js(...arg: any): any,
+    fn_args(...arg: any): any,
+    fn_no_args(...arg: any): any,
+    
+    // C++ Style Calls
+    fn_call_cpp_callback_js(...arg: any): any,
+
     // Async Callbacks with Emscripten Automagically
     callback_test(...arg: any): any,
     callback_test_async(...arg: any): any,
     pass_arr_cpp(...arg: any): any,
-    // 
+
+    // api ??
     api: any
 }
 
@@ -33,13 +42,8 @@ export async function wasmmodule(): Promise<Module> {
         mod_instance = await Module();
         mod_instance.onRuntimeInitialized = async () => {
             const api = {
+                // TODO : Move Malloc to Module ? 
                 malloc: mod_instance.cwrap("malloc", "number", ["number"]),
-                //
-                fn_no_args: mod_instance.cwrap("fn_no_args", "number", []),
-                fn_args: mod_instance.cwrap("fn_args", "number", []),
-                // Callbacks 
-                fn_call_cpp_callback_js: mod_instance.cwrap("fn_call_cpp_callback_js", "", ["number"]),
-                fn_call_js: mod_instance.cwrap("fn_call_js", "number", [], { async: true }),
             };
             mod_instance.api = api;
         };
@@ -82,11 +86,11 @@ export class DEV {
 
         // TS -> C : Function Calls 
 
-        await WasmModule.api.fn_call_js();
+        await WasmModule.fn_call_js();
 
-        await WasmModule.api.fn_no_args();
+        await WasmModule.fn_no_args();
 
-        await WasmModule.api.fn_args(100, dataPtr, 4);
+        await WasmModule.fn_args(100, dataPtr, 4);
 
         // Callback Signature Argument formatting for addFunction
         // Example: `vi` - return void fn(i32)
@@ -99,7 +103,7 @@ export class DEV {
         console.log("Call C function added via addFunction");
         let fp_sync = WasmModule.addFunction(ts_callback, 'ii');
         console.log("addFunction Pointer:", fp_sync)
-        let ret_sync = await WasmModule.api.fn_call_cpp_callback_js(fp_sync);
+        let ret_sync = await WasmModule.fn_call_cpp_callback_js(fp_sync);
         console.log("addFunction return: ", ret_sync);
         console.log("=====================================");
 
@@ -174,7 +178,10 @@ export class DEV {
         console.log(DEV.CPP_FN__TS_CB_PROXY);
 
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
-        // const WasmModule: Module = await wasmmodule();
+        const WasmModule: Module = await wasmmodule();
+        let ret_val_async_1 = await WasmModule.callback_test_async(async_ts_callback);
+        console.log("Return Value: ", ret_val_async_1);
+
 
     }
 

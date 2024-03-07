@@ -24,7 +24,7 @@ set(WASM_BUILD_FLAGS " \
 set(WASM_LINK_FLAGS "--bind \
 -s ENVIRONMENT=web,worker \
 -s EXPORTED_RUNTIME_METHODS=['writeArrayToMemory','cwrap'] \
--s EXPORTED_FUNCTIONS=['_fn_no_args','_fn_args','_malloc','_fn_call_js','_fn_call_cpp_callback_js','addFunction'] \
+-s EXPORTED_FUNCTIONS=['_malloc','addFunction'] \
 -s DEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$addFunction \
 -s PTHREAD_POOL_SIZE=1 \
 -s ALLOW_TABLE_GROWTH \
