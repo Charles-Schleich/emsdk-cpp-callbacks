@@ -2,28 +2,12 @@
 # npm install
 
 set -e
-# Check Emscripten installation
-if ! [[ $(which emcmake) ]]; then
-    echo "emcmake not found on local environment !"
-    echo "Please install emscripten: https://emscripten.org/docs/getting_started/downloads.html"
-    exit 1
-else
-    echo "emcmake found on local environment !"
-    echo $(which emcmake)
-fi
+echo "Build C++ -> Wasm"
+ 
+bash build_cpp.sh
 
-# Begin build
-
-echo "Start Build Locally"
-
-cd ./cpp-wasm 
-
-bash build-commands.sh 
-
-cd ../
-
-rm -rf ./src/wasm
-
-cp -r ./cpp-wasm/build.emscripten ./src/wasm
+echo "Build C++ -> Wasm"
 
 npm run build:ts
+
+echo "Build C++ -> Wasm"

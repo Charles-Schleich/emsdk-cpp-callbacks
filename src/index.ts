@@ -182,6 +182,10 @@ export class DEV {
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
         const WasmModule: Module = await wasmmodule();
         let ret_val_async_1 = await WasmModule.callback_test_async_proxying(async_ts_callback);
+
+        // let ret_val_async_1 = await WasmModule.sub("key_expr_1",cb);
+        // let ret_val_async_1 = await WasmModule.sub("key_expr_2",cb2);
+
         console.log("Return Value: ", ret_val_async_1);
 
 

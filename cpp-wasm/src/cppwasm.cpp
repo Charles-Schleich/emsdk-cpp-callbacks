@@ -245,7 +245,6 @@ void test_proxy_async(emscripten::val cb)
     //
 }
 
-
 void test_proxy_callback_with_ctx(emscripten::val cb)
 {
     std::cout << "Testing callback_with_ctx proxying\n";
@@ -261,7 +260,7 @@ void test_proxy_callback_with_ctx(emscripten::val cb)
         {
             i = 1;
             executor = std::this_thread::get_id();
-            std::cout << "    Proxy Ourselves Thread ID: " << executor <<" \n";
+            std::cout << "    Proxy Ourselves Thread ID: " << executor << " \n";
             ctx.finish();
         },
         [&]()
@@ -276,19 +275,30 @@ void test_proxy_callback_with_ctx(emscripten::val cb)
     // Proxy to looper.
     {
         queue.proxyCallbackWithCtx(
+            // target
             looper.native_handle(),
+            // function<void(ProxyingCtx)> &&func,
             [&](auto ctx)
             {
                 i = 2;
                 executor = std::this_thread::get_id();
+                // CANNOT Run anything INSIDE HERE ! CAUSES Program to explode.
+                // std::cout << "    looper : i value:" << i << " thread_id: " << executor << "\n";
+                // cb(10);
+
                 ctx.finish();
             },
+            // function<void()> &&callback,
             [&]()
             { j = 2; },
+            // function<void()> &&cancel
             {});
+            
         // TODO: Add a way to wait for work before executing it.
+        int looper_while = 0;
         while (j != 2)
         {
+            std::cout << "looper while loop " << looper_while << "\n";
             queue.execute();
         }
         assert(i == 2);
@@ -298,25 +308,36 @@ void test_proxy_callback_with_ctx(emscripten::val cb)
     // Proxy to returner.
     {
         queue.proxyCallbackWithCtx(
+            // target
             returner.native_handle(),
+            // function<void(ProxyingCtx)> &&func,
             [&](auto ctx)
             {
                 i = 3;
                 executor = std::this_thread::get_id();
+                std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
+                cb(10); // pthread error 
+                std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
+
                 auto finish = (void (*)(void *))emscripten_proxy_finish;
                 emscripten_async_call(finish, ctx.ctx, 0);
             },
+            // function<void()> &&callback,
             [&]()
             { j = 3; },
+            // function<void()> &&cancel
             {});
-        // TODO: Add a way to wait for work before executing it.
         while (j != 3)
         {
+            std::cout << "returner while loop" << "\n";
             queue.execute();
         }
         assert(i == 3);
         assert(executor == returner.get_id());
     }
+
+    std::cout << "i value: " << i << "\n";
+    std::cout << "END Testing callback_with_ctx proxying\n";
 }
 
 int callback_test_async_proxying(emscripten::val cb)
@@ -353,6 +374,13 @@ int callback_test_async_proxying(emscripten::val cb)
 
     return 10;
 }
+
+int sub(emscripten::val key_expr, emscripten::val cb)
+{
+    // cb : only here
+   
+}
+
 
 // Macro to Expose Functions Automagically
 EMSCRIPTEN_BINDINGS(my_module)
