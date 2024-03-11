@@ -9,6 +9,7 @@
 #include <string.h>
 // For what ?
 #include <iostream>
+#include <unistd.h>
 
 // The worker threads we will use. `looper` sits in a loop, continuously
 // processing work as it becomes available, while `returner` returns to the JS
@@ -173,7 +174,7 @@ int pass_arr_cpp(std::string js_arr)
 void test_proxy_async(emscripten::val cb) {
   std::cout << "Testing async proxying\n";
 
-  int i = 0;
+  int shared_var = 0;
 
   std::mutex mutex;
   std::condition_variable cond;
@@ -183,45 +184,62 @@ void test_proxy_async(emscripten::val cb) {
 
   // Proxy to ourselves.
   queue.proxyAsync(pthread_self(), [&]() {
-    i = 1;
+    shared_var = 1;
     executor = std::this_thread::get_id();
   });
-  assert(i == 0);
+
+  assert(shared_var == 0);
   queue.execute();
-  assert(i == 1);
+  assert(shared_var == 1);
   assert(executor == std::this_thread::get_id());
 
   // Proxy to looper.
   {
     queue.proxyAsync(looper.native_handle(), [&]() {
+      // Lock mutex 
       {
         std::unique_lock<std::mutex> lock(mutex);
-        i = 2;
+        shared_var = 2;
+        std::cout << "    Proxy looper Work: " << shared_var <<" \n";
+
       }
       executor = std::this_thread::get_id();
       std::cout << "    Proxy Looper Thread ID: " << executor <<" \n";
       cond.notify_one();
     });
     std::unique_lock<std::mutex> lock(mutex);
-    cond.wait(lock, [&]() { return i == 2; });
+    cond.wait(lock, [&]() { return shared_var == 2; });
     assert(executor == looper.get_id());
-  }
+  } // Mutex Unlocks here ? 
 
   // Proxy to returner.
   {
     queue.proxyAsync(returner.native_handle(), [&]() {
       {
         std::unique_lock<std::mutex> lock(mutex);
-        i = 3;
+        shared_var = 3;
+        std::cout << "    Proxy returner Work: " << shared_var <<" \n";
       }
       executor = std::this_thread::get_id();
       std::cout << "    Proxy returner Thread ID: " << executor <<" \n";
       cond.notify_one();
     });
+
     std::unique_lock<std::mutex> lock(mutex);
-    cond.wait(lock, [&]() { return i == 3; });
+
+    cond.wait(lock, [&]() { return shared_var == 3; });
+    
     assert(executor == returner.get_id());
+  }  
+
+
+  // 
+  for(int loop = 0; loop < 50; loop++) {
+    std::cout << loop << "\n";
+    std::cout << "shared_var: " << shared_var << "\n";
+    sleep(1);
   }
+  //
 }
 
 

@@ -55,7 +55,6 @@ export async function wasmmodule(): Promise<Module> {
     return mod_instance
 }
 
-
 function ts_callback(num: number): number {
     console.log("    TS CALLBACK: ", num);
     return 10 + num;
