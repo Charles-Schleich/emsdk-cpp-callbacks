@@ -11,27 +11,34 @@
 #include <iostream>
 #include <unistd.h>
 
+//  To call js callback from function pointer
+//  extern void call_js_callback(int, uint8_t *, int);
+
+// Expose Interface To TS
+EMSCRIPTEN_DECLARE_VAL_TYPE(CallbackType);
+
+
 // The worker threads we will use. `looper` sits in a loop, continuously
 // processing work as it becomes available, while `returner` returns to the JS
 // event loop each time it processes work.
-std::thread looper;
-std::thread returner;
+// std::thread looper;
+// std::thread returner;
 
 // The queue used to send work to both `looper` and `returner`.
-emscripten::ProxyingQueue queue;
+// emscripten::ProxyingQueue queue;
 
 // Whether `looper` should exit.
 std::atomic<bool> should_quit{false};
 
 //
-void looper_main()
-{
-    while (!should_quit)
-    {
-        queue.execute();
-        sched_yield();
-    }
-}
+// void looper_main()
+// {
+//     while (!should_quit)
+//     {
+//         queue.execute();
+//         sched_yield();
+//     }
+// }
 
 //
 void returner_main()
@@ -170,217 +177,319 @@ int pass_arr_cpp(std::string js_arr)
 // ██      ██      ██                    ██      ██   ██ ██    ██  ██ ██     ██    ██ ██  ██ ██ ██    ██
 //  ██████ ██      ██                    ██      ██   ██  ██████  ██   ██    ██    ██ ██   ████  ██████
 
-void test_proxy_async(emscripten::val cb)
+// void test_proxy_async(emscripten::val cb)
+// {
+//     std::cout << "Testing async proxying\n";
+
+//     int shared_var = 0;
+
+//     std::mutex mutex;
+//     std::condition_variable cond;
+//     std::thread::id executor;
+
+//     std::cout << "  Main Thread ID: " << executor << " \n";
+
+//     // Proxy to ourselves.
+//     queue.proxyAsync(pthread_self(), [&]()
+//                      {
+//     shared_var = 1;
+//     executor = std::this_thread::get_id(); });
+
+//     assert(shared_var == 0);
+//     queue.execute();
+//     assert(shared_var == 1);
+//     assert(executor == std::this_thread::get_id());
+
+//     // Proxy to looper.
+//     {
+//         queue.proxyAsync(looper.native_handle(), [&]()
+//                          {
+//       // Lock mutex 
+//       {
+//         std::unique_lock<std::mutex> lock(mutex);
+//         shared_var = 2;
+//         std::cout << "    Proxy looper Work: " << shared_var <<" \n";
+
+//       }
+//       executor = std::this_thread::get_id();
+//       std::cout << "    Proxy Looper Thread ID: " << executor <<" \n";
+//       cond.notify_one(); });
+
+//         std::unique_lock<std::mutex> lock(mutex);
+//         cond.wait(lock, [&]()
+//                   { return shared_var == 2; });
+//         assert(executor == looper.get_id());
+//     } // Mutex Unlocks here ?
+
+//     // Proxy to returner.
+//     {
+
+//         queue.proxyAsync(returner.native_handle(), [&]()
+//                          {
+//       {
+//         std::unique_lock<std::mutex> lock(mutex);
+//         shared_var = 3;
+//         std::cout << "    Proxy returner Work: " << shared_var <<" \n";
+//       }
+//       executor = std::this_thread::get_id();
+//       std::cout << "    Proxy returner Thread ID: " << executor <<" \n";
+//       cond.notify_one(); });
+
+//         std::unique_lock<std::mutex> lock(mutex);
+
+//         cond.wait(lock, [&]()
+//                   { return shared_var == 3; });
+
+//         assert(executor == returner.get_id());
+//     }
+
+//     //
+//     // for(int loop = 0; loop < 50; loop++) {
+//     //   std::cout << loop << "\n";
+//     //   std::cout << "shared_var: " << shared_var << "\n";
+//     //   sleep(1);
+//     // }
+//     //
+// }
+
+// void test_proxy_callback_with_ctx(emscripten::val cb)
+// {
+//     std::cout << "Testing callback_with_ctx proxying\n";
+
+//     int i = 0;
+//     thread_local int j = 0;
+//     std::thread::id executor;
+
+//     // Proxy to ourselves.
+//     queue.proxyCallbackWithCtx(
+//         pthread_self(),
+//         [&](auto ctx)
+//         {
+//             i = 1;
+//             executor = std::this_thread::get_id();
+//             std::cout << "    Proxy Ourselves Thread ID: " << executor << " \n";
+//             ctx.finish();
+//         },
+//         [&]()
+//         { j = 1; },
+//         {});
+//     assert(i == 0);
+//     queue.execute();
+//     assert(i == 1);
+//     assert(executor == std::this_thread::get_id());
+//     assert(j == 1);
+
+//     // Proxy to looper.
+//     {
+//         queue.proxyCallbackWithCtx(
+//             // target
+//             looper.native_handle(),
+//             // function<void(ProxyingCtx)> &&func,
+//             [&](auto ctx)
+//             {
+//                 i = 2;
+//                 executor = std::this_thread::get_id();
+//                 // CANNOT Run anything INSIDE HERE ! CAUSES Program to explode.
+//                 // std::cout << "    looper : i value:" << i << " thread_id: " << executor << "\n";
+//                 // cb(10);
+
+//                 ctx.finish();
+//             },
+//             // function<void()> &&callback,
+//             [&]()
+//             { j = 2; },
+//             // function<void()> &&cancel
+//             {});
+
+//         // TODO: Add a way to wait for work before executing it.
+//         int looper_while = 0;
+//         while (j != 2)
+//         {
+//             std::cout << "looper while loop " << looper_while << "\n";
+//             queue.execute();
+//         }
+//         assert(i == 2);
+//         assert(executor == looper.get_id());
+//     }
+
+//     // Proxy to returner.
+//     {
+//         queue.proxyCallbackWithCtx(
+//             // target
+//             returner.native_handle(),
+//             // function<void(ProxyingCtx)> &&func,
+//             [&](auto ctx)
+//             {
+//                 i = 3;
+//                 executor = std::this_thread::get_id();
+//                 std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
+//                 cb(10); // pthread error
+//                 std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
+
+//                 auto finish = (void (*)(void *))emscripten_proxy_finish;
+//                 emscripten_async_call(finish, ctx.ctx, 0);
+//             },
+//             // function<void()> &&callback,
+//             [&]()
+//             {
+//                 std::cout << "    returner Thread Callback Function \n";
+//                 // cb(10);
+//                 j = 3;
+//             },
+//             // function<void()> &&cancel
+//             {});
+//         while (j != 3)
+//         {
+//             std::cout << "returner while loop"
+//                       << "\n";
+//             queue.execute();
+//         }
+//         assert(i == 3);
+//         assert(executor == returner.get_id());
+//     }
+
+//     std::cout << "i value: " << i << "\n";
+//     std::cout << "END Testing callback_with_ctx proxying\n";
+// }
+
+// int callback_test_async_proxying(emscripten::val cb)
+// {
+//     emscripten::ProxyingQueue local_queue;
+//     auto parent_thread = pthread_self();
+//     std::cout << "beep\n";
+//     std::thread looper([=]()
+//                        {
+//         for (int i = 0; i < 10; i++) {
+//             std::cout << "lol " << i << std::endl;
+//             sleep(1);
+//             queue.proxyAsync(parent_thread, [=](){
+//                 cb(i).await();
+//             });
+//         } });
+//     std::cout << "boop\n";
+//     // printf("------ callback_test_async_proxying ------\n");
+
+//     // looper = std::thread(looper_main);
+//     // returner = std::thread(returner_main);
+
+//     // // printf("------ test_proxy_async ------\n");
+//     // // test_proxy_async(cb);
+//     // // printf("------ test_proxy_async ------\n");
+
+//     // printf("------ test_proxy_callback_with_ctx ------\n");
+//     // test_proxy_callback_with_ctx(cb);
+//     // printf("------ test_proxy_callback_with_ctx ------\n");
+
+//     // // printf("------ Call Callback ------\n");
+//     // // cb(25);
+//     // // printf("------ Call Callback ------\n");
+
+//     // // test_proxy_sync();
+//     // // test_proxy_sync_with_ctx();
+//     // // test_proxy_callback();
+//     // // test_proxy_callback_with_ctx();
+
+//     // should_quit = true;
+//     // looper.join();
+
+//     // pthread_cancel(returner.native_handle());
+//     // returner.join();
+
+//     // std::cout << "done\n";
+
+//     return 10;
+// }
+
+
+pthread_t main_thread;
+em_proxying_queue *proxy_queue = NULL;
+std::thread value_producer_thread;
+
+pthread_t worker;
+int i = 0;
+
+void run_job(void *arg)
 {
-    std::cout << "Testing async proxying\n";
-
-    int shared_var = 0;
-
-    std::mutex mutex;
-    std::condition_variable cond;
-    std::thread::id executor;
-
-    std::cout << "  Main Thread ID: " << executor << " \n";
-
-    // Proxy to ourselves.
-    queue.proxyAsync(pthread_self(), [&]()
-                     {
-    shared_var = 1;
-    executor = std::this_thread::get_id(); });
-
-    assert(shared_var == 0);
-    queue.execute();
-    assert(shared_var == 1);
-    assert(executor == std::this_thread::get_id());
-
-    // Proxy to looper.
-    {
-        queue.proxyAsync(looper.native_handle(), [&]()
-                         {
-      // Lock mutex 
-      {
-        std::unique_lock<std::mutex> lock(mutex);
-        shared_var = 2;
-        std::cout << "    Proxy looper Work: " << shared_var <<" \n";
-
-      }
-      executor = std::this_thread::get_id();
-      std::cout << "    Proxy Looper Thread ID: " << executor <<" \n";
-      cond.notify_one(); });
-
-        std::unique_lock<std::mutex> lock(mutex);
-        cond.wait(lock, [&]()
-                  { return shared_var == 2; });
-        assert(executor == looper.get_id());
-    } // Mutex Unlocks here ?
-
-    // Proxy to returner.
-    {
-
-        queue.proxyAsync(returner.native_handle(), [&]()
-                         {
-      {
-        std::unique_lock<std::mutex> lock(mutex);
-        shared_var = 3;
-        std::cout << "    Proxy returner Work: " << shared_var <<" \n";
-      }
-      executor = std::this_thread::get_id();
-      std::cout << "    Proxy returner Thread ID: " << executor <<" \n";
-      cond.notify_one(); });
-
-        std::unique_lock<std::mutex> lock(mutex);
-
-        cond.wait(lock, [&]()
-                  { return shared_var == 3; });
-
-        assert(executor == returner.get_id());
-    }
-
-    //
-    // for(int loop = 0; loop < 50; loop++) {
-    //   std::cout << loop << "\n";
-    //   std::cout << "shared_var: " << shared_var << "\n";
-    //   sleep(1);
-    // }
-    //
+  // printf("------ thread %lu: RUN JOB ------\n", pthread_self());
+  emscripten::val *cb = (emscripten::val *)arg;
+  (*cb)(i);
+  i++;
 }
 
-void test_proxy_callback_with_ctx(emscripten::val cb)
+static void *worker_main(void *arg)
 {
-    std::cout << "Testing callback_with_ctx proxying\n";
-
-    int i = 0;
-    thread_local int j = 0;
-    std::thread::id executor;
-
-    // Proxy to ourselves.
-    queue.proxyCallbackWithCtx(
-        pthread_self(),
-        [&](auto ctx)
-        {
-            i = 1;
-            executor = std::this_thread::get_id();
-            std::cout << "    Proxy Ourselves Thread ID: " << executor << " \n";
-            ctx.finish();
-        },
-        [&]()
-        { j = 1; },
-        {});
-    assert(i == 0);
-    queue.execute();
-    assert(i == 1);
-    assert(executor == std::this_thread::get_id());
-    assert(j == 1);
-
-    // Proxy to looper.
-    {
-        queue.proxyCallbackWithCtx(
-            // target
-            looper.native_handle(),
-            // function<void(ProxyingCtx)> &&func,
-            [&](auto ctx)
-            {
-                i = 2;
-                executor = std::this_thread::get_id();
-                // CANNOT Run anything INSIDE HERE ! CAUSES Program to explode.
-                // std::cout << "    looper : i value:" << i << " thread_id: " << executor << "\n";
-                // cb(10);
-
-                ctx.finish();
-            },
-            // function<void()> &&callback,
-            [&]()
-            { j = 2; },
-            // function<void()> &&cancel
-            {});
-            
-        // TODO: Add a way to wait for work before executing it.
-        int looper_while = 0;
-        while (j != 2)
-        {
-            std::cout << "looper while loop " << looper_while << "\n";
-            queue.execute();
-        }
-        assert(i == 2);
-        assert(executor == looper.get_id());
-    }
-
-    // Proxy to returner.
-    {
-        queue.proxyCallbackWithCtx(
-            // target
-            returner.native_handle(),
-            // function<void(ProxyingCtx)> &&func,
-            [&](auto ctx)
-            {
-                i = 3;
-                executor = std::this_thread::get_id();
-                std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
-                cb(10); // pthread error 
-                std::cout << "    returner : i value:" << i << " thread_id: " << executor << "\n";
-
-                auto finish = (void (*)(void *))emscripten_proxy_finish;
-                emscripten_async_call(finish, ctx.ctx, 0);
-            },
-            // function<void()> &&callback,
-            [&]()
-            { j = 3; },
-            // function<void()> &&cancel
-            {});
-        while (j != 3)
-        {
-            std::cout << "returner while loop" << "\n";
-            queue.execute();
-        }
-        assert(i == 3);
-        assert(executor == returner.get_id());
-    }
-
-    std::cout << "i value: " << i << "\n";
-    std::cout << "END Testing callback_with_ctx proxying\n";
+  while (true)
+  {
+    // printf("------ thread %lu: PROXY JOB ------\n", pthread_self());
+    emscripten_proxy_sync(proxy_queue, main_thread, run_job, arg);
+    sleep(1);
+  }
 }
 
-int callback_test_async_proxying(emscripten::val cb)
+int run_on_event(emscripten::val arg)
 {
-    printf("------ callback_test_async_proxying ------\n");
+  // printf("------ thread %lu: run_on_event ------\n", pthread_self());
+  main_thread = pthread_self();
 
-    looper = std::thread(looper_main);
-    returner = std::thread(returner_main);
+  emscripten::val *cb = new emscripten::val(std::move(arg));
 
-    // printf("------ test_proxy_async ------\n");
-    // test_proxy_async(cb);
-    // printf("------ test_proxy_async ------\n");
+  pthread_create(&worker, NULL, worker_main, (void *)cb);
 
-    printf("------ test_proxy_callback_with_ctx ------\n");
-    test_proxy_callback_with_ctx(cb);
-    printf("------ test_proxy_callback_with_ctx ------\n");
-
-    // printf("------ Call Callback ------\n");
-    // cb(25);
-    // printf("------ Call Callback ------\n");
-
-    // test_proxy_sync();
-    // test_proxy_sync_with_ctx();
-    // test_proxy_callback();
-    // test_proxy_callback_with_ctx();
-
-    should_quit = true;
-    looper.join();
-
-    pthread_cancel(returner.native_handle());
-    returner.join();
-
-    std::cout << "done\n";
-
-    return 10;
+  proxy_queue = em_proxying_queue_create();
+  return 0;
 }
 
-int sub(emscripten::val key_expr, emscripten::val cb)
+struct closure_t
 {
-    // cb : only here
-   
+  void *cb;
+  const int *value;
+};
+
+void run_callback(void *arg)
+{
+    // printf("------ thread %lu: RUN CB ------\n", pthread_self());
+    closure_t *closure = (closure_t *)arg;
+    emscripten::val *cb = (emscripten::val *)closure->cb;
+
+    //   (*cb)(10, (int)closure->sample->payload.start, (int)closure->sample->payload.len);
+    (*cb)(10, 11, 12);
+ 
 }
 
+
+void callback_handler(const int *value, void *arg)
+{
+
+  closure_t closure;
+  closure.cb = arg;
+  closure.value = value;
+  emscripten_proxy_sync(proxy_queue, main_thread, run_callback, &closure);
+}
+
+// CPP Produes a value periodically !
+int call_js_function_periodically(emscripten::val ts_cb)
+{
+    // Need to move the function pointer to here
+    emscripten::val *ts_cb_ptr = new emscripten::val(std::move(ts_cb));
+    
+    std::cout << "Main Thread: " << pthread_self() << std::endl;
+
+    // *callback = z_closure_sample(data_handler, NULL, ts_cb_ptr);
+    // spawn new thread here with function
+    std::thread value_producer_thread([=]()
+                    {
+        for (int i = 0; i < 1000; i++) {
+            std::cout << "Other thread  :" << pthread_self() << std::endl;
+
+            sleep(1);
+
+            // queue.proxyAsync(parent_thread, [=](){
+                // cb(i).await();
+            // });
+        } }
+    );
+
+}
 
 // Macro to Expose Functions Automagically
 EMSCRIPTEN_BINDINGS(my_module)
@@ -391,11 +500,13 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("fn_args", &fn_args);
 
     // C++
-
     emscripten::function("fn_call_cpp_callback_js", &fn_call_cpp_callback_js);
     emscripten::function("callback_test", &callback_test);
-    emscripten::function("callback_test_async", &callback_test_async);
-    emscripten::function("callback_test_async_proxying", &callback_test_async_proxying);
+    // emscripten::function("callback_test_async", &callback_test_async);
+    // emscripten::function("callback_test_async_proxying", &callback_test_async_proxying);
     emscripten::function("pass_arr_cpp", &pass_arr_cpp);
+
+    // C++ Receiving Typescript Callback
+    emscripten::function("call_js_function_periodically", &call_js_function_periodically);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

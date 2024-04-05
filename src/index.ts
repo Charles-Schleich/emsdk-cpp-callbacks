@@ -21,7 +21,7 @@ interface Module {
     fn_call_js(...arg: any): any,
     fn_args(...arg: any): any,
     fn_no_args(...arg: any): any,
-    
+
     // C++ Style Calls
     fn_call_cpp_callback_js(...arg: any): any,
 
@@ -32,7 +32,7 @@ interface Module {
 
     // Async Callbacks with Emscripten Automagically
     callback_test_async_proxying(...arg: any): any,
-
+    call_js_function_periodically(...arg: any): any,
     // api ??
     api: any
 }
@@ -181,13 +181,18 @@ export class DEV {
 
         console.log("Start : C++ method of passing Callbacks to CPP code from TypeScript");
         const WasmModule: Module = await wasmmodule();
-        let ret_val_async_1 = await WasmModule.callback_test_async_proxying(async_ts_callback);
 
-        // let ret_val_async_1 = await WasmModule.sub("key_expr_1",cb);
-        // let ret_val_async_1 = await WasmModule.sub("key_expr_2",cb2);
+        // let ret_val_async_1 = await WasmModule.callback_test_async_proxying(async (...args: any[]) => {
+        //     console.log(args)
+        // });
 
-        console.log("Return Value: ", ret_val_async_1);
+        WasmModule.call_js_function_periodically(async (val1: number, val2: number, val3: number) => {
+            console.log("val1", val1);
+            console.log("val2", val2);
+            console.log("val3", val3);
+        })
 
+        // console.log("Return Value: ", ret_val_async_1);
 
     }
 

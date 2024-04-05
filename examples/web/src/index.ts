@@ -1,7 +1,6 @@
 import * as cppwasm from "../../../esm"
 
 
-
 async function main() {
     console.log("Start");
     // 
